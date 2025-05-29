@@ -1,6 +1,5 @@
 <?php
 session_start();
-include_once __DIR__ . '/../config/setting-config.php';
 
 //error reporting
 ini_set('display_errors', 1);

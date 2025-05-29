@@ -200,6 +200,182 @@ class ADMIN
         }
     }
 
+    public function sendResetOtp($otp, $email){
+        if($email == Null){
+            echo "<script>alert('No email found.'); window.location.href = '../../../';</script>";
+            exit;
+        }else{
+            $stmt = $this->runQuery("SELECT * FROM user WHERE email = :email");
+            $stmt->execute(array(":email" => $email));
+            $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $_SESSION["ResetOTP"] = $otp;
+
+                $subject = "OTP VERIFICATION";
+                $message = "
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='UTF-8'>
+                    <title>OTP Verification</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background-color: #f5f5f5;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 30px;
+                            background-color: #ffffff;
+                            border-radius: 4px;
+                            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+                        }
+                        
+                        h1 {
+                            color: #333333;
+                            font-size: 24px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        p {
+                             color: #666666;
+                            font-size: 16px;
+                            margin-bottom: 10px;
+                        }
+
+                        .button {
+                            display: inline-block;
+                            padding: 12px 24px;
+                            background-color: #0088cc;
+                            color: #ffffff;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            font-size: 16px;
+                            margin-top: 20px;
+                        }
+                        
+                        .logo {
+                            display: block;
+                            text-align: center;
+                            margin-bottom: 30px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='cid:logo' alt='Logo' width='150'>
+                        </div>
+                        <h1>OTP Verification</h1>
+                        <p>Hello, $email</p>
+                        <p>Your OTP is: $otp</p>
+                        <p>If you didn't request an OTP, please ignore this email.</p>
+                        <p>Thank you!</p>
+                    </div>
+                </body>
+                </html>";
+
+                $this->send_email($email, $message, $subject, $this->smtp_email, $this->smtp_password);
+                echo "<script>alert('We sent the OTP to $email.'); window.location.href = '../../../verify-otp.php';</script>";
+            
+        }
+    }
+
+    //Unfinished
+    public function verifyResetOtp($username, $email, $password, $tokencode, $otp, $csrf_token){
+        if($otp == $_SESSION['ResetOTP']){
+            unset($_SESSION['ResetOTP']);
+
+            $this->addAdmin($csrf_token, $username, $email, $password);
+
+            $subject = "VERIFICATION SUCCESS";
+            $message = "
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='UTF-8'>
+                    <title>OTP Verification</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background-color: #f5f5f5;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 30px;
+                            background-color: #ffffff;
+                            border-radius: 4px;
+                            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+                        }
+                        
+                        h1 {
+                            color: #333333;
+                            font-size: 24px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        p {
+                             color: #666666;
+                            font-size: 16px;
+                            margin-bottom: 10px;
+                        }
+
+                        .button {
+                            display: inline-block;
+                            padding: 12px 24px;
+                            background-color: #0088cc;
+                            color: #ffffff;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            font-size: 16px;
+                            margin-top: 20px;
+                        }
+                        
+                        .logo {
+                            display: block;
+                            text-align: center;
+                            margin-bottom: 30px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='cid:logo' alt='Logo' width='150'>
+                        </div>
+                        <h1>Welcome</h1>
+                        <p>Hello,<strong>$email</strong></p>
+                        <p>welcome to Arron System</p>
+                        <p>If you didn't request an OTP, please ignore this email.</p>
+                        <p>Thank you!</p>
+                    </div>
+                </body>
+                </html>";
+
+            $this->send_email($email, $message, $subject, $this->smtp_email, $this->smtp_password);
+            echo "<script>alert('Thank you'); window.location.href = '../../../';</script>";
+
+            unset($_SESSION["not_verify_username"]);
+            unset($_SESSION["not_verify_email"]);
+            unset($_SESSION["not_verify_password"]);
+        }else if($otp == NULL){
+            echo "<script>alert('No OTP found'); window.location.href = '../../../verify-otp.php';</script>";
+            exit;
+        }else{
+            echo "<script>alert('It appears OTP you entered is invalid'); window.location.href = '../../../verify-otp.php';</script>";
+            exit;
+        }
+    }
+
+
     public function addAdmin($csrf_token, $username, $email, $password){
         $stmt = $this->runQuery("SELECT * FROM user WHERE email = :email");
         $stmt->execute(array(":email" => $email));
@@ -216,7 +392,7 @@ class ADMIN
 
         unset($_SESSION['csrf_token']);
 
-        $hash_password = md5($password);
+        $hash_password = password_hash($password, PASSWORD_DEFAULT);
 
         $stmt = $this->runQuery('INSERT INTO user(username, email, password) VALUES(:username, :email, :password)');
         $exec = $stmt->execute(array(
@@ -326,7 +502,7 @@ class ADMIN
     }
     
     public function redirect(){
-        echo "<script>alert('Admin must login first'); window.location.href = '../../../';</script>";
+        echo "<script>alert('Admin must login first'); window.location.href = '../../';</script>";
         exit;
     }
 
