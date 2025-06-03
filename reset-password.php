@@ -16,7 +16,7 @@
 
         <div class="form-section" id="reset-password-section">
             <h1>RESET PASSWORD</h1>
-            <form action="dashboard/admin/authentication/reset-password-handler.php" method="POST">
+            <form action="dashboard/admin/authentication/admin-class.php" method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token ?>">
 
                 <input type="password" name="new_password" placeholder="Enter new password" required><br>

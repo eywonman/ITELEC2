@@ -208,16 +208,27 @@ class ADMIN
             $stmt = $this->runQuery("SELECT * FROM user WHERE email = :email");
             $stmt->execute(array(":email" => $email));
             $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($stmt->rowCount() == 0){
+                echo "<script>alert('Invalid Email. Please try another one'); window.location.href = '../../../forgot-password.php';</script>";
+                exit;
+            }
+            /*
+            if(!$user){
+                echo "<script>alert('Invalid Email. Please try another one'); window.location.href = '../../../forgot-password.php';</script>";
+                exit;
+            }*/
             
+            else{
             $_SESSION["ResetOTP"] = $otp;
 
-                $subject = "OTP VERIFICATION";
+                $subject = "RESET PASSWORD";
                 $message = "
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset='UTF-8'>
-                    <title>OTP Verification</title>
+                    <title>RESET PASSWORD</title>
                     <style>
                         body {
                             font-family: Arial, sans-serif;
@@ -280,8 +291,8 @@ class ADMIN
                 </html>";
 
                 $this->send_email($email, $message, $subject, $this->smtp_email, $this->smtp_password);
-                echo "<script>alert('We sent the OTP to $email.'); window.location.href = '../../../verify-otp.php';</script>";
-            
+                echo "<script>alert('We sent the OTP to $email.'); window.location.href = '../../../verify-reset.php';</script>";
+            }
         }
     }
 
@@ -367,10 +378,10 @@ class ADMIN
             unset($_SESSION["not_verify_email"]);
             unset($_SESSION["not_verify_password"]);
         }else if($otp == NULL){
-            echo "<script>alert('No OTP found'); window.location.href = '../../../verify-otp.php';</script>";
+            echo "<script>alert('No OTP found'); window.location.href = '../../../verify-reset.php';</script>";
             exit;
         }else{
-            echo "<script>alert('It appears OTP you entered is invalid'); window.location.href = '../../../verify-otp.php';</script>";
+            echo "<script>alert('It appears OTP you entered is invalid'); window.location.href = '../../../verify-reset.php';</script>";
             exit;
         }
     }
@@ -549,6 +560,15 @@ if(isset($_POST['btn-signin'])){
 if(isset($_GET['admin_signout'])){
     $adminSignout = new ADMIN();
     $adminSignout->adminSignout();
+}
+
+if(isset($_POST['btn-forgot-password'])){
+    
+    $email = trim($_POST['email']);
+    $otp = rand(100000,999999);
+
+    $addAdmin = new ADMIN();
+    $addAdmin->sendResetOtp($otp, $email);
 }
 
 ?>
