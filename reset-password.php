@@ -1,5 +1,9 @@
 <?php
-    include_once 'config/setting-config.php';
+
+session_start();
+include_once 'config/setting-config.php';
+include_once 'authentication/admin-class.php';
+
 ?>
 
 <!DOCTYPE html>

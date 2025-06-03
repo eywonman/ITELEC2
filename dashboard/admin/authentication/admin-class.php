@@ -208,6 +208,7 @@ class ADMIN
             $stmt = $this->runQuery("SELECT * FROM user WHERE email = :email");
             $stmt->execute(array(":email" => $email));
             $stmt->fetch(PDO::FETCH_ASSOC);
+            $_SESSION["email"] = $email;
 
             if ($stmt->rowCount() == 0){
                 echo "<script>alert('Invalid Email. Please try another one'); window.location.href = '../../../forgot-password.php';</script>";
@@ -296,12 +297,9 @@ class ADMIN
         }
     }
 
-    //Unfinished
-    public function verifyResetOtp($username, $email, $password, $tokencode, $otp, $csrf_token){
+    public function verifyResetOtp($otp){
         if($otp == $_SESSION['ResetOTP']){
             unset($_SESSION['ResetOTP']);
-
-            $this->addAdmin($csrf_token, $username, $email, $password);
 
             $subject = "VERIFICATION SUCCESS";
             $message = "
@@ -370,13 +368,13 @@ class ADMIN
                     </div>
                 </body>
                 </html>";
+            
+            echo "<script>alert('Redirecting to Password Reset'); window.location.href = '../../../reset-password.php';</script>";
+            exit;
 
             $this->send_email($email, $message, $subject, $this->smtp_email, $this->smtp_password);
             echo "<script>alert('Thank you'); window.location.href = '../../../';</script>";
 
-            unset($_SESSION["not_verify_username"]);
-            unset($_SESSION["not_verify_email"]);
-            unset($_SESSION["not_verify_password"]);
         }else if($otp == NULL){
             echo "<script>alert('No OTP found'); window.location.href = '../../../verify-reset.php';</script>";
             exit;
@@ -386,6 +384,22 @@ class ADMIN
         }
     }
 
+    //unfinished
+    public function passwordReset($newpass, $confpass){
+        if ($newpass !== $confpass) {
+            echo "<script>alert('The new password and confirm password do not match.'); window.location.href = '../../../reset-password.php';</script>";
+            exit;
+        }
+        else{
+            $hash_password = password_hash($newpass, PASSWORD_DEFAULT);
+
+            $stmt = $this->runQuery("UPDATE user SET password = :password WHERE email = :email");
+            $stmt->execute(array(":password" => $hash_password, ":email" => $_SESSION["email"] ));
+            unset($_SESSION['email']);
+            echo "<script>alert('Password Successfully Reset.'); window.location.href = '../../../';</script>";
+            exit;
+        }
+    }
 
     public function addAdmin($csrf_token, $username, $email, $password){
         $stmt = $this->runQuery("SELECT * FROM user WHERE email = :email");
@@ -567,8 +581,25 @@ if(isset($_POST['btn-forgot-password'])){
     $email = trim($_POST['email']);
     $otp = rand(100000,999999);
 
-    $addAdmin = new ADMIN();
-    $addAdmin->sendResetOtp($otp, $email);
+    $adminForgot = new ADMIN();
+    $adminForgot->sendResetOtp($otp, $email);
 }
 
+if(isset($_POST['btn-verify-otp'])){
+    
+    $otp = trim($_POST['otp']);
+
+    $adminResetPass = new ADMIN();
+    $adminResetPass->verifyResetOtp($otp);
+}
+
+//unfinished
+if(isset($_POST['btn-reset-password'])){
+    
+    $newpass = trim($_POST['new_password']);
+    $confpass = trim($_POST['confirm_password']);
+
+    $adminResetPass = new ADMIN();
+    $adminResetPass->passwordReset($newpass, $confpass);
+}
 ?>
