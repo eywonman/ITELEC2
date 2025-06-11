@@ -301,6 +301,8 @@ class ADMIN
         if($otp == $_SESSION['ResetOTP']){
             unset($_SESSION['ResetOTP']);
 
+            $_SESSION["verifiedEmail"] = $_SESSION["email"];
+
             $subject = "VERIFICATION SUCCESS";
             $message = "
                 <!DOCTYPE html>
@@ -384,7 +386,6 @@ class ADMIN
         }
     }
 
-    //unfinished
     public function passwordReset($newpass, $confpass){
         if ($newpass !== $confpass) {
             echo "<script>alert('The new password and confirm password do not match.'); window.location.href = '../../../reset-password.php';</script>";
@@ -396,6 +397,7 @@ class ADMIN
             $stmt = $this->runQuery("UPDATE user SET password = :password WHERE email = :email");
             $stmt->execute(array(":password" => $hash_password, ":email" => $_SESSION["email"] ));
             unset($_SESSION['email']);
+            unset($_SESSION['verifiedEmail']);
             echo "<script>alert('Password Successfully Reset.'); window.location.href = '../../../';</script>";
             exit;
         }
@@ -593,7 +595,6 @@ if(isset($_POST['btn-verify-otp'])){
     $adminResetPass->verifyResetOtp($otp);
 }
 
-//unfinished
 if(isset($_POST['btn-reset-password'])){
     
     $newpass = trim($_POST['new_password']);

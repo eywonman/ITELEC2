@@ -1,8 +1,12 @@
 <?php
 
-session_start();
 include_once 'config/setting-config.php';
-include_once 'authentication/admin-class.php';
+include_once 'dashboard/admin/authentication/admin-class.php';
+
+if (!isset($_SESSION['verifiedEmail'])){
+    echo "<script>alert('You must enter your email first.'); window.location.href = 'forgot-password.php';</script>";
+    exit;
+}
 
 ?>
 
